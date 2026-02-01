@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rajibpur Live | সরাসরি রাজিবপুর থেকে</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark sticky-top shadow-lg">
+    <div class="container-fluid">
+        <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#rajibpurDrawer">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <a class="navbar-brand fw-bold fs-2 text-danger mx-auto" href="index.html">RAJIBPUR <span class="text-white">LIVE</span></a>
+    </div>
+</nav>
+
+<div class="offcanvas offcanvas-start bg-dark text-white" tabindex="-1" id="rajibpurDrawer" style="width: 55%;">
+    <div class="offcanvas-header border-bottom border-secondary">
+        <h5 class="offcanvas-title text-danger fw-bold">মেনু তালিকা</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+        <div class="list-group list-group-flush">
+            <a href="#" class="list-group-item list-group-item-action bg-dark text-white border-secondary" onclick="fetchNews('all')"><i class="fas fa-home me-2"></i> ১. হোম</a>
+            <a href="#" class="list-group-item list-group-item-action bg-dark text-white border-secondary" onclick="fetchNews('rajibpur')"><i class="fas fa-map-marker-alt me-2"></i> ২. চর রাজিবপুর নিউজ</a>
+            <a href="#" class="list-group-item list-group-item-action bg-dark text-white border-secondary" onclick="fetchNews('kurigram')"><i class="fas fa-city me-2"></i> ৩. কুড়িগ্রাম নিউজ</a>
+            <a href="admin.html" class="list-group-item list-group-item-action bg-dark text-warning border-secondary fw-bold"><i class="fas fa-user-shield me-2"></i> এডমিন প্যানেল</a>
+        </div>
+    </div>
+</div>
+
+<div class="bg-danger text-white py-2 shadow-sm border-bottom border-warning border-3">
+    <div class="container d-flex align-items-center">
+        <span class="badge bg-white text-danger me-2"><i class="fas fa-bolt"></i> ব্রেকিং</span>
+        <marquee behavior="scroll" direction="left">স্বাগতম রাজিবপুর লাইভে। সর্বশেষ খবরের জন্য আমাদের সাথেই থাকুন।</marquee>
+    </div>
+</div>
+
+<div class="container my-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white">
+                <input type="text" id="searchInput" class="form-control border-0 px-4" placeholder="খবর খুঁজুন...">
+                <button class="btn btn-danger px-4" onclick="searchNews()"><i class="fas fa-search"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<main class="container my-5">
+    <h4 id="categoryHeader" class="fw-bold border-left-danger ps-3 mb-4">সর্বশেষ আপডেট</h4>
+    <div id="news-container" class="row g-4">
+        <p class="text-center py-5">নিউজ লোড হচ্ছে...</p>
+    </div>
+</main>
+
+<footer class="bg-dark text-white pt-5 pb-3 border-top border-danger border-5">
+    <div class="container text-center">
+        <h2 class="fw-bold text-danger">RAJIBPUR LIVE</h2>
+        <div class="d-flex justify-content-center gap-4 my-4">
+            <a href="https://www.facebook.com/61578568075274/posts/883674567813659/" target="_blank" class="text-white fs-1"><i class="fab fa-facebook"></i></a>
+            <a href="https://wa.me/8801939817463" target="_blank" class="text-white fs-1"><i class="fab fa-whatsapp"></i></a>
+            <a href="https://t.me/Mizanur_Rahman_501314" target="_blank" class="text-white fs-1"><i class="fab fa-telegram"></i></a>
+        </div>
+        <p class="small text-secondary">ডেভেলপার: Md. Mizanur Rahman</p>
+    </div>
+</footer>
+
+<script>
+    // Firebase Configuration
+    const firebaseConfig = { databaseURL: "https://rajiblur-live-default-rtdb.firebaseio.com/" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // নিউজ ফেচ করা (টাইম অনুযায়ী)
+    function fetchNews(category = 'all') {
+        db.ref('news').orderByChild('timestamp').on('value', (snapshot) => {
+            const container = document.getElementById('news-container');
+            container.innerHTML = '';
+            let newsList = [];
+            snapshot.forEach(child => {
+                const data = child.val();
+                if(category === 'all' || data.category === category) newsList.unshift(data);
+            });
+
+            if(newsList.length === 0) {
+                container.innerHTML = '<p class="text-center py-5">কোনো নিউজ পাওয়া যায়নি।</p>';
+                return;
+            }
+
+            newsList.forEach((news, index) => {
+                container.innerHTML += `
+                    <div class="col-12 news-card-item">
+                        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                            <div class="social-top p-2 bg-light d-flex justify-content-end gap-3 border-bottom">
+                                <a href="https://www.facebook.com/61578568075274/posts/883674567813659/" target="_blank" class="text-primary"><i class="fab fa-facebook"></i></a>
+                                <a href="https://wa.me/8801939817463" target="_blank" class="text-success"><i class="fab fa-whatsapp"></i></a>
+                                <a href="https://t.me/Mizanur_Rahman_501314" target="_blank" class="text-info"><i class="fab fa-telegram"></i></a>
+                            </div>
+                            <div class="row g-0">
+                                <div class="col-md-4"><img src="${news.image}" class="img-fluid h-100 object-fit-cover" style="min-height:200px"></div>
+                                <div class="col-md-8 p-3">
+                                    <small class="text-muted"><i class="far fa-clock"></i> ${news.date} | ${news.time}</small>
+                                    <h4 class="fw-bold my-2">${news.title}</h4>
+                                    <p class="text-muted mb-2">${news.preview}</p>
+                                    <div id="full-${index}" class="d-none border-top pt-2 mt-2">${news.full}</div>
+                                    <button class="btn btn-danger btn-sm mt-2" onclick="toggleNews(${index}, this)">বিস্তারিত দেখুন</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+        });
+    }
+
+    function toggleNews(id, btn) {
+        const content = document.getElementById('full-' + id);
+        content.classList.toggle('d-none');
+        btn.innerText = content.classList.contains('d-none') ? "বিস্তারিত দেখুন" : "সংক্ষিপ্ত করুন";
+    }
+
+    function searchNews() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        document.querySelectorAll('.news-card-item').forEach(card => {
+            const title = card.querySelector('h4').innerText.toLowerCase();
+            card.style.display = title.includes(query) ? "block" : "none";
+        });
+    }
+
+    fetchNews();
+</script>
+</body>
+</html>
