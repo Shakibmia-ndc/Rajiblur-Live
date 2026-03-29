@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MR TUBE - Official M R DEVELOPER</title>
+    
+    <meta name="monetag" content="b6acd3966f86eeaa8f40675e9be8f96d">
+    
+    <link rel="preconnect" href="https://vairal-video-18-default-rtdb.firebaseio.com/">
+    <link rel="preconnect" href="https://www.gstatic.com">
+    <link rel="dns-prefetch" href="https://www.gstatic.com">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    
+    <script src='//libtl.com/sdk.js' data-zone='10797250' data-sdk='show_10797250'></script>
+    
+    <style>
+        :root {
+            --yt-red: #ff0000;
+            --bg-white: #ffffff;
+            --text-black: #0f0f0f;
+            --gray-text: #606060;
+            --border-color: #e5e5e5;
+            --dev-green: #2ecc71;
+            --rainbow: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3);
+            --royal-blue: #007bff;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-white);
+            color: var(--text-black);
+            font-family: 'Roboto', Arial, sans-serif;
+            user-select: text; 
+            overflow-x: hidden;
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+
+        .header-nav {
+            position: sticky; top: 0;
+            background: var(--bg-white);
+            display: flex; align-items: center;
+            padding: 12px 5%; z-index: 1001;
+            border-bottom: 1px solid var(--border-color);
+            justify-content: space-between;
+        }
+
+        .logo-area {
+            display: flex; align-items: center;
+            font-size: 24px; font-weight: 800; letter-spacing: -1px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .logo-area .pro { color: var(--text-black); }
+        .logo-area .tube {
+            background-color: var(--yt-red); color: white;
+            padding: 2px 8px; border-radius: 4px;
+            margin-left: 4px; font-size: 19px;
+        }
+
+        #video-player-container {
+            display: none; width: 100%; max-width: 1000px; 
+            margin: 0 auto; background: #000;
+            position: sticky; top: 55px; z-index: 1000;
+        }
+
+        #main-video-element { 
+            width: 100%; aspect-ratio: 16 / 9; 
+            background: #000; display: block; 
+        }
+
+        .playing-info-box { 
+            padding: 15px 5%; background: var(--bg-white); 
+            border-bottom: 1px solid var(--border-color); 
+        }
+
+        .playing-now-title { 
+            font-size: 19px; font-weight: 600; line-height: 1.4; color: var(--text-black); 
+            cursor: pointer; position: relative;
+        }
+
+        .video-actions-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-top: 15px; flex-wrap: wrap; gap: 10px;
+        }
+
+        .view-stat-text { font-size: 14px; color: var(--gray-text); font-weight: 500; }
+
+        .action-btn {
+            padding: 8px 25px; border: none; background: #f2f2f2;
+            cursor: pointer; display: flex; align-items: center; gap: 8px;
+            font-size: 14px; font-weight: 600; color: var(--text-black);
+            transition: all 0.2s; border-radius: 20px;
+        }
+
+        .action-btn:hover { background: #e5e5e5; transform: scale(1.05); }
+
+        #next-episode-container {
+            padding: 15px 5%;
+            background: #f9f9f9;
+            border-bottom: 1px solid var(--border-color);
+            display: none;
+        }
+        .next-label {
+            font-size: 13px; font-weight: 800; color: var(--yt-red);
+            margin-bottom: 10px; display: block; letter-spacing: 1px;
+        }
+
+        /* --- Comment & React System Styling --- */
+        #comment-section {
+            padding: 20px 5% 40px;
+            background: #fff;
+        }
+        .comment-header {
+            font-size: 16px; font-weight: 700; margin-bottom: 15px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .comment-input-wrapper {
+            display: flex; gap: 10px; margin-bottom: 25px; align-items: flex-start;
+        }
+        .comment-input-wrapper input {
+            flex: 1; padding: 12px 15px; border-radius: 8px; border: 1px solid var(--border-color);
+            outline: none; font-size: 14px;
+        }
+        .comment-input-wrapper button {
+            background: var(--yt-red); color: white; border: none;
+            padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;
+        }
+        .comment-list { display: flex; flex-direction: column; gap: 20px; }
+        .comment-item { display: flex; gap: 12px; position: relative; }
+        .comment-content { flex: 1; }
+        .comment-user { font-size: 13px; font-weight: 700; color: #333; margin-bottom: 2px; }
+        .comment-text { font-size: 14px; color: #444; line-height: 1.4; }
+        .react-bar {
+            display: flex; align-items: center; gap: 12px; margin-top: 8px;
+        }
+        .love-react-btn {
+            display: flex; align-items: center; gap: 4px;
+            font-size: 12px; font-weight: 700; color: var(--gray-text);
+            cursor: pointer; transition: 0.2s;
+        }
+        .love-react-btn:hover { color: var(--yt-red); }
+        .love-count { font-weight: 800; color: var(--yt-red); }
+
+        .search-wrapper { padding: 20px 5%; background: var(--bg-white); text-align: center; }
+        .colorful-border-box {
+            display: inline-block; width: 100%; max-width: 600px;
+            padding: 3px; border-radius: 30px;
+            background: var(--rainbow); background-size: 300% 300%;
+            animation: rainbow-flow 5s linear infinite;
+        }
+
+        .search-box-input {
+            width: 100%; padding: 12px 20px; border-radius: 28px; border: none;
+            background: #f1f1f1; color: #000; font-size: 16px; outline: none; box-sizing: border-box;
+        }
+
+        .main-content-grid {
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+            gap: 25px; padding: 10px 5% 120px;
+        }
+
+        @media (max-width: 480px) {
+            .main-content-grid { grid-template-columns: 1fr; padding: 10px 10px 120px; gap: 20px; }
+        }
+
+        .video-item-card { 
+            width: 100%; cursor: pointer; 
+            border-bottom: 1px solid var(--border-color); 
+            padding-bottom: 15px; transition: transform 0.2s ease;
+        }
+        
+        .video-item-card:hover { transform: translateY(-3px); }
+
+        .img-container { 
+            width: 90%; margin: 0 auto; 
+            aspect-ratio: 16 / 9; background: #f0f0f0; 
+            overflow: hidden; padding: 4px; 
+            border-radius: 12px; background: var(--rainbow); 
+            background-size: 300% 300%;
+            animation: rainbow-flow 5s linear infinite; 
+            box-sizing: border-box; box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+        }
+        
+        .img-container img { 
+            width: 100%; height: 100%; 
+            object-fit: cover; border-radius: 8px; display: block;
+        }
+        
+        .video-description-area { display: flex; padding: 12px 10px 0; gap: 12px; }
+        .avatar-circle {
+            width: 40px; height: 40px; background: #f0f0f0; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; color: var(--yt-red);
+            font-size: 15px;
+        }
+        .v-title-text { font-size: 15px; font-weight: 500; color: var(--text-black); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
+        .v-sub-text { font-size: 12px; color: var(--gray-text); margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
+
+        .page-footer { text-align: center; padding: 40px 15px; background: #f9f9f9; border-top: 1px solid var(--border-color); margin-top: auto; user-select: none;}
+        
+        .contact-dev-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 10px;
+            padding: 10px 24px;
+            background-color: var(--royal-blue);
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 15px;
+            font-weight: 700;
+            box-shadow: 0 4px 6px rgba(0, 123, 255, 0.2);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .contact-dev-link:hover {
+            background-color: #ffffff;
+            color: var(--royal-blue);
+            border-color: var(--royal-blue);
+            transform: translateY(-2px);
+        }
+
+        .copy-info { font-size: 11px; color: #777; margin-top: 15px; letter-spacing: 1px; }
+
+        @keyframes rainbow-flow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header-nav">
+        <div class="logo-area" onclick="location.reload()">
+            <span class="pro">MR</span><span class="tube">TUBE</span>
+        </div>
+    </header>
+
+    <section id="video-player-container">
+        <video id="main-video-element" controls playsinline webkit-playsinline preload="auto" poster="https://via.placeholder.com/1280x720.png?text=MR+TUBE+Streaming..."></video>
+        <div class="playing-info-box">
+            <div id="display-playing-title" class="playing-now-title" onclick="copyPlayingTitle()">ভিডিও লোড হচ্ছে...</div>
+            
+            <div class="video-actions-bar">
+                <div class="view-stat-text">
+                    Official Bot • <span id="v-upload-time">আজ</span>
+                </div>
+                
+                <button class="action-btn" id="share-trigger">
+                    🚀 Share to Telegram
+                </button>
+            </div>
+        </div>
+
+        <div id="next-episode-container">
+            <span class="next-label">UP NEXT EPISODE:</span>
+            <div id="next-episode-card"></div>
+        </div>
+
+        <div id="comment-section">
+            <div class="comment-header">মন্তব্য সমূহ</div>
+            <div class="comment-input-wrapper">
+                <input type="text" id="user-comment-input" placeholder="আপনার মন্তব্য লিখুন...">
+                <button onclick="submitComment()">পাঠান</button>
+            </div>
+            <div id="comment-list-container" class="comment-list">
+                </div>
+        </div>
+    </section>
+
+    <div id="content-container">
+        <div class="search-wrapper">
+            <div class="colorful-border-box">
+                <input type="text" id="userSearchInput" class="search-box-input" placeholder="এপিসোড নাম্বার বা নাম দিয়ে সার্চ করুন..." oninput="executeSearch()">
+            </div>
+        </div>
+
+        <main id="video-display-grid" class="main-content-grid">
+            <div style="text-align:center; padding:40px; color:#888;">লোড হচ্ছে...</div>
+        </main>
+    </div>
+
+    <footer class="page-footer">
+        <div style="color: #333; font-size: 14px; font-weight: 600;">Design & Developed by:</div>
+        <a href="https://t.me/Mizanur_Rahman_501314" target="_blank" class="contact-dev-link">Contact Developer</a>
+        <div class="copy-info">© 2026 MR TUBE NETWORK. ALL RIGHTS RESERVED.</div>
+    </footer>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://vairal-video-18-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let masterVideoData = [];
+        let currentPlayingId = null;
+
+        const videoPlayer = document.getElementById('main-video-element');
+        const playerBox = document.getElementById('video-player-container');
+        const contentBox = document.getElementById('content-container');
+        const titleLabel = document.getElementById('display-playing-title');
+        const uploadTimeLabel = document.getElementById('v-upload-time');
+        const nextContainer = document.getElementById('next-episode-container');
+        const nextCard = document.getElementById('next-episode-card');
+
+        // অ্যাড ট্র্যাকিং লজিক
+        function getSmartAdTracker() {
+            const today = new Date().toLocaleDateString();
+            let data = JSON.parse(localStorage.getItem('mr_tube_v4_ads') || '{"date":"","watchedIds":[],"dailyCount":0}');
+            if (data.date !== today) {
+                return { date: today, watchedIds: [], dailyCount: 0 };
+            }
+            return data;
+        }
+
+        function saveSmartAdTracker(tracker) {
+            localStorage.setItem('mr_tube_v4_ads', JSON.stringify(tracker));
+        }
+
+        function runAdSequence(videoId, callback) {
+            let tracker = getSmartAdTracker();
+            if (tracker.dailyCount >= 8 || tracker.watchedIds.includes(videoId)) {
+                callback();
+                return;
+            }
+            if (typeof show_10797250 === 'function') {
+                show_10797250();
+                setTimeout(() => {
+                    let freshTracker = getSmartAdTracker();
+                    if (!freshTracker.watchedIds.includes(videoId) && freshTracker.dailyCount < 8) {
+                        freshTracker.dailyCount += 1;
+                        freshTracker.watchedIds.push(videoId);
+                        saveSmartAdTracker(freshTracker);
+                    }
+                }, 14000); 
+            }
+            setTimeout(callback, 50);
+        }
+
+        function getEpisodeNumber(name) {
+            if (!name) return 0;
+            const match = name.match(/\d+/g);
+            return match ? parseInt(match[match.length - 1]) : 0;
+        }
+
+        database.ref('videos').on('value', (snapshot) => {
+            const rawData = snapshot.val();
+            masterVideoData = [];
+            if (rawData) {
+                Object.keys(rawData).forEach(key => {
+                    masterVideoData.push({ id: key, ...rawData[key] });
+                });
+            }
+            masterVideoData.sort((a, b) => getEpisodeNumber(b.name) - getEpisodeNumber(a.name));
+            if(contentBox.style.display !== "none") executeSearch();
+        });
+
+        function renderUI(dataList, isSearching) {
+            const grid = document.getElementById('video-display-grid');
+            grid.innerHTML = isSearching && dataList.length === 0 ? "<div style='text-align:center; padding:40px; color:#888;'>দুঃখিত! কোনো ভিডিও পাওয়া যায়নি।</div>" : "";
+            dataList.forEach(item => {
+                grid.innerHTML += `
+                    <article class="video-item-card" onclick="initiatePlay('${item.id}')">
+                        <div class="img-container">
+                            <img src="${item.photo || 'https://via.placeholder.com/640x360.png?text=No+Thumbnail'}" loading="lazy">
+                        </div>
+                        <div class="video-description-area">
+                            <div class="avatar-circle">MR</div>
+                            <div class="text-meta">
+                                <span class="v-title-text">${item.name}</span>
+                                <span class="v-sub-text"><span>Official Bot</span></span>
+                            </div>
+                        </div>
+                    </article>`;
+            });
+        }
+
+        function checkNextEpisode(currentName) {
+            const currentNum = getEpisodeNumber(currentName);
+            if (currentNum === 0) { nextContainer.style.display = "none"; return; }
+            const nextEp = masterVideoData.find(v => getEpisodeNumber(v.name) === (currentNum + 1));
+            if (nextEp) {
+                nextContainer.style.display = "block";
+                nextCard.innerHTML = `
+                    <div class="video-item-card" onclick="initiatePlay('${nextEp.id}')" style="border:none; padding:10px; display:flex; gap:12px; align-items:center; background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                        <div class="img-container" style="width:110px; margin:0; height:62px; padding:2px; border-radius:6px;">
+                            <img src="${nextEp.photo || 'https://via.placeholder.com/110x62.png'}" style="border-radius:4px;">
+                        </div>
+                        <div style="flex:1;">
+                            <div class="v-title-text" style="font-size:14px; font-weight:700;">${nextEp.name}</div>
+                            <div class="v-sub-text" style="font-size:11px; color:var(--dev-green); font-weight:bold;">এপিসোডটি দেখুন ➔</div>
+                        </div>
+                    </div>`;
+            } else { nextContainer.style.display = "none"; }
+        }
+
+        function executeSearch() {
+            const keyword = document.getElementById('userSearchInput').value.toLowerCase().trim();
+            const results = keyword.length > 0 ? masterVideoData.filter(v => v.name.toLowerCase().includes(keyword)) : masterVideoData;
+            renderUI(results, keyword.length > 0);
+        }
+
+        function initiatePlay(v_id) {
+            const video = masterVideoData.find(v => v.id === v_id);
+            if (!video || !video.video_url) return;
+            runAdSequence(v_id, () => {
+                currentPlayingId = v_id;
+                playerBox.style.display = "block";
+                contentBox.style.display = "none"; 
+                const videoSrc = video.video_url;
+                titleLabel.innerText = video.name;
+                if (Hls.isSupported() && videoSrc.includes('.m3u8')) {
+                    const hls = new Hls();
+                    hls.loadSource(videoSrc);
+                    hls.attachMedia(videoPlayer);
+                    hls.on(Hls.Events.MANIFEST_PARSED, () => { videoPlayer.play(); });
+                } else {
+                    videoPlayer.src = videoSrc;
+                    videoPlayer.load();
+                    videoPlayer.play().catch(() => {});
+                }
+                const date = video.timestamp ? new Date(video.timestamp).toLocaleDateString('bn-BD') : new Date().toLocaleDateString('bn-BD');
+                uploadTimeLabel.innerText = date;
+                window.scrollTo({ top: 0, behavior: 'auto' });
+                checkNextEpisode(video.name);
+                loadComments(v_id);
+            });
+        }
+
+        function copyPlayingTitle() {
+            const title = titleLabel.innerText;
+            if (title && title !== "ভিডিও লোড হচ্ছে...") {
+                navigator.clipboard.writeText(title).then(() => {
+                    Swal.fire({ icon: 'success', title: 'টাইটেল কপি হয়েছে!', showConfirmButton: false, timer: 1500, position: 'top-end', toast: true });
+                });
+            }
+        }
+
+        document.getElementById('share-trigger').onclick = () => {
+            if (!currentPlayingId) return;
+            const shareUrl = `https://t.me/mrtube_bot?start=${currentPlayingId}`;
+            window.location.href = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=MR TUBE এ ভিডিওটি দেখুন 🥰`;
+        };
+
+        /* --- Real-time Comment & Love System Logic --- */
+        const tgApp = window.Telegram.WebApp;
+        tgApp.expand();
+        tgApp.ready();
+
+        function submitComment() {
+            const input = document.getElementById('user-comment-input');
+            const text = input.value.trim();
+            if (!text || !currentPlayingId) return;
+
+            const user = tgApp.initDataUnsafe.user || { id: 0, first_name: "Guest" };
+            
+            database.ref('comments/' + currentPlayingId).push({
+                u_id: user.id,
+                u_name: user.first_name,
+                msg: text,
+                loves: 0,
+                time: Date.now()
+            });
+            input.value = "";
+        }
+
+        function loadComments(v_id) {
+            const container = document.getElementById('comment-list-container');
+            database.ref('comments/' + v_id).on('value', (snapshot) => {
+                container.innerHTML = "";
+                const data = snapshot.val();
+                if (!data) {
+                    container.innerHTML = "<div style='color:#999; font-size:13px;'>এখনও কোনো মন্তব্য নেই। প্রথম মন্তব্যটি আপনি করুন!</div>";
+                    return;
+                }
+                Object.keys(data).forEach(key => {
+                    const c = data[key];
+                    let html = `
+                        <div class="comment-item">
+                            <div class="avatar-circle" style="width:32px; height:32px; font-size:12px;">${c.u_name.charAt(0)}</div>
+                            <div class="comment-content">
+                                <div class="comment-user">${c.u_name}</div>
+                                <div class="comment-text">${c.msg}</div>
+                                <div class="react-bar">
+                                    <div class="love-react-btn" onclick="addLove('${v_id}', '${key}')">
+                                        ❤️ লাভ দিন <span class="love-count">${c.loves || 0}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                    container.innerHTML += html;
+                });
+            });
+        }
+
+        function addLove(v_id, c_key) {
+            const loveRef = database.ref('comments/' + v_id + '/' + c_key + '/loves');
+            loveRef.transaction((currentLoves) => {
+                return (currentLoves || 0) + 1;
+            });
+        }
+    </script>
+</body>
+</html>
